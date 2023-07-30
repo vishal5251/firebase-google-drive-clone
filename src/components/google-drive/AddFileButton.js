@@ -3,10 +3,12 @@ import ReactDOM from "react-dom"
 import { faFileUpload } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useAuth } from "../../contexts/AuthContext"
-import { storage, database, ref } from "../../firebase"
+import { storage, database, ref, uploadBytes, getDownloadURL } from "../../firebase"
 import { ROOT_FOLDER } from "../../hooks/useFolder"
 import { v4 as uuidV4 } from "uuid"
 import { ProgressBar, Toast } from "react-bootstrap"
+import { addDoc, collection } from "firebase/firestore"
+import { uploadBytesResumable } from "firebase/storage"
 
 export default function AddFileButton({ currentFolder }) {
   const [uploadingFiles, setUploadingFiles] = useState([])
@@ -26,64 +28,110 @@ export default function AddFileButton({ currentFolder }) {
         ? `${currentFolder.path.join("/")}/${file.name}`
         : `${currentFolder.path.join("/")}/${currentFolder.name}/${file.name}`
 
-    const uploadTask = storage
-      .ref(`/files/${currentUser.uid}/${filePath}`)
-      .put(file)
+    const storageRef = ref(storage, `/files/${currentUser.uid}/${filePath}`)
 
-    uploadTask.on(
-      "state_changed",
-      snapshot => {
-        const progress = snapshot.bytesTransferred / snapshot.totalBytes
-        setUploadingFiles(prevUploadingFiles => {
-          return prevUploadingFiles.map(uploadFile => {
-            if (uploadFile.id === id) {
-              return { ...uploadFile, progress: progress }
-            }
+    const uploadTask = uploadBytesResumable(storageRef, file)
 
-            return uploadFile
-          })
+    uploadTask.on("state_changed", (snapshot) => {
+      const progress = snapshot.bytesTransferred / snapshot.totalBytes
+      setUploadingFiles(prevUploadingFiles => {
+        return prevUploadingFiles.map(uploadFile => {
+          if (uploadFile.id === id) {
+            return { ...uploadFile, progress: progress }
+          }
+          return uploadFile
         })
-      },
-      () => {
-        setUploadingFiles(prevUploadingFiles => {
-          return prevUploadingFiles.map(uploadFile => {
-            if (uploadFile.id === id) {
-              return { ...uploadFile, error: true }
-            }
-            return uploadFile
-          })
+      })
+    }, () => {
+      setUploadingFiles(prevUploadingFiles => {
+        return prevUploadingFiles.map(uploadFile => {
+          if (uploadFile.id === id) {
+            return { ...uploadFile, error: true }
+          }
+          return uploadFile
         })
-      },
-      () => {
-        setUploadingFiles(prevUploadingFiles => {
-          return prevUploadingFiles.filter(uploadFile => {
-            return uploadFile.id !== id
-          })
+      })
+    }, () => {
+      setUploadingFiles(prevUploadingFiles => {
+        return prevUploadingFiles.filter(uploadFile => {
+          return uploadFile.id !== id
         })
+      })
+      getDownloadURL(uploadTask.snapshot.ref).then(url => {
+        console.log(url)
+        try {
+          addDoc(collection(database, "files"), {
+            url: url,
+            name: file.name,
+            createdAt: new Date().getTime(),
+            folderId: currentFolder.id,
+            userId: currentUser.uid,
+          })
+          // console.log("this is the response: ", res)
+        } catch (e) {
+          console.log(e)
+        }
+      })
+    })
 
-        uploadTask.snapshot.ref.getDownloadURL().then(url => {
-          database.files
-            .where("name", "==", file.name)
-            .where("userId", "==", currentUser.uid)
-            .where("folderId", "==", currentFolder.id)
-            .get()
-            .then(existingFiles => {
-              const existingFile = existingFiles.docs[0]
-              if (existingFile) {
-                existingFile.ref.update({ url: url })
-              } else {
-                database.files.add({
-                  url: url,
-                  name: file.name,
-                  createdAt: new Date().getTime(),
-                  folderId: currentFolder.id,
-                  userId: currentUser.uid,
-                })
-              }
-            })
-        })
-      }
-    )
+    // const uploadTask = storage
+    //   .ref(`/files/${currentUser.uid}/${filePath}`)
+    //   .put(file)
+
+    // uploadTask.on(
+    //   "state_changed",
+    //   snapshot => {
+    //     const progress = snapshot.bytesTransferred / snapshot.totalBytes
+    //     setUploadingFiles(prevUploadingFiles => {
+    //       return prevUploadingFiles.map(uploadFile => {
+    //         if (uploadFile.id === id) {
+    //           return { ...uploadFile, progress: progress }
+    //         }
+
+    //         return uploadFile
+    //       })
+    //     })
+    //   },
+    //   () => {
+    //     setUploadingFiles(prevUploadingFiles => {
+    //       return prevUploadingFiles.map(uploadFile => {
+    //         if (uploadFile.id === id) {
+    //           return { ...uploadFile, error: true }
+    //         }
+    //         return uploadFile
+    //       })
+    //     })
+    //   },
+    //   () => {
+    //     setUploadingFiles(prevUploadingFiles => {
+    //       return prevUploadingFiles.filter(uploadFile => {
+    //         return uploadFile.id !== id
+    //       })
+    //     })
+
+    //     uploadTask.snapshot.ref.getDownloadURL().then(url => {
+    //       database.files
+    //         .where("name", "==", file.name)
+    //         .where("userId", "==", currentUser.uid)
+    //         .where("folderId", "==", currentFolder.id)
+    //         .get()
+    //         .then(existingFiles => {
+    //           const existingFile = existingFiles.docs[0]
+    //           if (existingFile) {
+    //             existingFile.ref.update({ url: url })
+    //           } else {
+    //             database.files.add({
+    //               url: url,
+    //               name: file.name,
+    //               createdAt: new Date().getTime(),
+    //               folderId: currentFolder.id,
+    //               userId: currentUser.uid,
+    //             })
+    //           }
+    //         })
+    //     })
+    //   }
+    // )
   }
 
   return (

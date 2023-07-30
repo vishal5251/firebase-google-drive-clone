@@ -55,7 +55,9 @@ export function useFolder(folderId = null, folder = null) {
     dispatch({ type: ACTIONS.SELECT_FOLDER, payload: { folderId, folder } })
   }, [folderId, folder])
 
-  useEffect(async () => {
+  useEffect( () => {
+
+    async function getFolder() {
     if (folderId == null) {
       return dispatch({
         type: ACTIONS.UPDATE_FOLDER,
@@ -122,6 +124,9 @@ export function useFolder(folderId = null, folder = null) {
     //       payload: { folder: ROOT_FOLDER },
     //     })
     //   })
+  }
+
+  getFolder()
 
   }, [folderId])
 
@@ -138,8 +143,10 @@ export function useFolder(folderId = null, folder = null) {
   //     })
   // }, [folderId, currentUser])
 
-  useEffect(async () => {
-    console.log("folderId: ", folderId, " currentUser: ", currentUser.uid)
+  useEffect( () => {
+
+    async function getFolders() {
+    // console.log("folderId: ", folderId, " currentUser: ", currentUser.uid)
     const q = query(collection(database, "folders"), where("parentId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
     // const querySnapshot = await getDocs(collection(database, "folders"), where("parentId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
     const querySnapshot = await getDocs(q);
@@ -151,12 +158,15 @@ export function useFolder(folderId = null, folder = null) {
       res.push({ id: doc.id, ...doc.data() })
     });
 
-    console.log("response: ", res)
+    // console.log("response: ", res)
 
     dispatch({
       type: ACTIONS.SET_CHILD_FOLDERS,
       payload: { childFolders: res },
     })
+  }
+
+  getFolders()
 
   }, [folderId, currentUser])
 
@@ -175,7 +185,9 @@ export function useFolder(folderId = null, folder = null) {
   //   )
   // }, [folderId, currentUser])
 
-  useEffect(async () => {
+  useEffect( () => {
+
+    async function getFiles() {
 
     const querySnapshot = await getDocs(collection(database, "files"), where("folderId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
 
@@ -186,10 +198,15 @@ export function useFolder(folderId = null, folder = null) {
       res.push({ id: doc.id, ...doc.data() })
     });
 
+    // console.log("response: ", res)
+
     dispatch({
       type: ACTIONS.SET_CHILD_FILES,
-      payload: { childFolders: res },
+      payload: { childFiles: res },
     })
+  }
+
+  getFiles()
 
   }, [folderId, currentUser])
 
