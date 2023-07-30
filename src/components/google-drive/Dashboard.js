@@ -12,6 +12,7 @@ import { useParams, useLocation } from "react-router-dom"
 export default function Dashboard() {
   const { folderId } = useParams()
   const { state = {} } = useLocation()
+  // console.log("this is the state: ", state.folder)
   const { folder, childFolders, childFiles } = useFolder(folderId, state.folder)
 
   return (

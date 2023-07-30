@@ -1,6 +1,7 @@
 import { useReducer, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { database } from "../firebase"
+import { collection, getDocs } from "firebase/firestore"
 
 const ACTIONS = {
   SELECT_FOLDER: "select-folder",
@@ -53,7 +54,7 @@ export function useFolder(folderId = null, folder = null) {
     dispatch({ type: ACTIONS.SELECT_FOLDER, payload: { folderId, folder } })
   }, [folderId, folder])
 
-  useEffect(() => {
+  useEffect(async () => {
     if (folderId == null) {
       return dispatch({
         type: ACTIONS.UPDATE_FOLDER,
@@ -61,13 +62,33 @@ export function useFolder(folderId = null, folder = null) {
       })
     }
 
-    database.folders
-      .doc(folderId)
-      .get()
+    // database.folders
+    //   .doc(folderId)
+    //   .get()
+    //   .then(doc => {
+    //     dispatch({
+    //       type: ACTIONS.UPDATE_FOLDER,
+    //       payload: { folder: database.formatDoc(doc) },
+    //     })
+    //   })
+    //   .catch(() => {
+    //     dispatch({
+    //       type: ACTIONS.UPDATE_FOLDER,
+    //       payload: { folder: ROOT_FOLDER },
+    //     })
+    //   })
+
+    await getDocs(collection(database, "folders"))
+      .then((querySnapshot) => {
+        const res = querySnapshot.docs.filter((doc) => {
+          return doc.id === folderId
+        });
+        return res
+      })
       .then(doc => {
         dispatch({
           type: ACTIONS.UPDATE_FOLDER,
-          payload: { folder: database.formatDoc(doc) },
+          payload: { folder: { folderId: doc.id, folder: doc } },
         })
       })
       .catch(() => {
@@ -76,6 +97,7 @@ export function useFolder(folderId = null, folder = null) {
           payload: { folder: ROOT_FOLDER },
         })
       })
+
   }, [folderId])
 
   useEffect(() => {
