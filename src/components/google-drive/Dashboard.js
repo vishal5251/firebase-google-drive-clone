@@ -11,10 +11,17 @@ import { useParams, useLocation } from "react-router-dom"
 
 export default function Dashboard() {
   const { folderId } = useParams()
-  const { state = {} } = useLocation()
-  // console.log("this is the state: ", state.folder)
-  const { folder, childFolders, childFiles } = useFolder(folderId, state.folder)
+  let { state } = useLocation()
+  state = state || {}
 
+  // console.log("this is the folder: ", state.folder)
+  const {
+    folder,
+    childFolders,
+    childFiles
+  } = useFolder(folderId, state.folder)
+  
+  // console.log("this is the childFolders: ", childFolders, folder, childFiles) 
   return (
     <>
       <Navbar />
@@ -24,7 +31,7 @@ export default function Dashboard() {
           <AddFileButton currentFolder={folder} />
           <AddFolderButton currentFolder={folder} />
         </div>
-        {childFolders.length > 0 && (
+        {childFolders?.length > 0 && (
           <div className="d-flex flex-wrap">
             {childFolders.map(childFolder => (
               <div
@@ -37,8 +44,8 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-        {childFolders.length > 0 && childFiles.length > 0 && <hr />}
-        {childFiles.length > 0 && (
+        {childFolders?.length > 0 && childFiles?.length > 0 && <hr />}
+        {childFiles?.length > 0 && (
           <div className="d-flex flex-wrap">
             {childFiles.map(childFile => (
               <div

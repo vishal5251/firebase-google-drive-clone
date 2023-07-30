@@ -39,13 +39,14 @@ export default function AddFolderButton({ currentFolder }) {
     // })
 
     try {
-      await addDoc(collection(database, "folders"), {
+      const res = await addDoc(collection(database, "folders"), {
         name: name,
         parentId: currentFolder.id,
         userId: currentUser.uid,
         path: path,
-        createdAt: database.getCurrentTimestamp(),
+        createdAt: new Date().getTime(),
       })
+      // console.log("this is the response: ", res)
     } catch (e) {
       console.log(e)
     }

@@ -3,7 +3,7 @@ import ReactDOM from "react-dom"
 import { faFileUpload } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { useAuth } from "../../contexts/AuthContext"
-import { storage, database } from "../../firebase"
+import { storage, database, ref } from "../../firebase"
 import { ROOT_FOLDER } from "../../hooks/useFolder"
 import { v4 as uuidV4 } from "uuid"
 import { ProgressBar, Toast } from "react-bootstrap"
@@ -75,7 +75,7 @@ export default function AddFileButton({ currentFolder }) {
                 database.files.add({
                   url: url,
                   name: file.name,
-                  createdAt: database.getCurrentTimestamp(),
+                  createdAt: new Date().getTime(),
                   folderId: currentFolder.id,
                   userId: currentUser.uid,
                 })
