@@ -55,158 +55,86 @@ export function useFolder(folderId = null, folder = null) {
     dispatch({ type: ACTIONS.SELECT_FOLDER, payload: { folderId, folder } })
   }, [folderId, folder])
 
-  useEffect( () => {
+  useEffect(() => {
 
     async function getFolder() {
-    if (folderId == null) {
-      return dispatch({
-        type: ACTIONS.UPDATE_FOLDER,
-        payload: { folder: ROOT_FOLDER },
-      })
+      if (folderId == null) {
+        return dispatch({
+          type: ACTIONS.UPDATE_FOLDER,
+          payload: { folder: ROOT_FOLDER },
+        })
+      }
+
+      const querySnapshot = await getDocs(collection(database, "folders"), where("parentId", "==", folderId));
+
+      let res = null;
+      querySnapshot.forEach((doc) => {
+        // doc.data() is never undefined for query doc snapshots
+        // console.log(doc.id, " => ", doc.data());
+        res = { id: doc.id, ...doc.data() }
+      });
+      if (res) {
+        dispatch({
+          type: ACTIONS.UPDATE_FOLDER,
+          payload: { folder: res },
+        })
+      }
+      else {
+        dispatch({
+          type: ACTIONS.UPDATE_FOLDER,
+          payload: { folder: ROOT_FOLDER },
+        })
+      }
     }
 
-    // database.folders
-    //   .doc(folderId)
-    //   .get()
-    //   .then(doc => {
-    //     dispatch({
-    //       type: ACTIONS.UPDATE_FOLDER,
-    //       payload: { folder: database.formatDoc(doc) },
-    //     })
-    //   })
-    //   .catch(() => {
-    //     dispatch({
-    //       type: ACTIONS.UPDATE_FOLDER,
-    //       payload: { folder: ROOT_FOLDER },
-    //     })
-    //   })
-
-    const querySnapshot = await getDocs(collection(database, "folders"), where("folderId", "==", folderId));
-
-    let res = null;
-    querySnapshot.forEach((doc) => {
-      // doc.data() is never undefined for query doc snapshots
-      // console.log(doc.id, " => ", doc.data());
-      res = { id: doc.id, ...doc.data() }
-    });
-    if (res) {
-      dispatch({
-        type: ACTIONS.UPDATE_FOLDER,
-        payload: { folder: res },
-      })
-    }
-    else {
-      dispatch({
-        type: ACTIONS.UPDATE_FOLDER,
-        payload: { folder: ROOT_FOLDER },
-      })
-    }
-
-    // await getDocs(collection(database, "folders"))
-    //   .then((querySnapshot) => {
-    //     const res = querySnapshot.docs.filter((doc) => {
-    //       return doc.id === folderId
-    //     });
-    //     console.log("this is the response: ", res.id)
-    //     return res
-    //   })
-    //   .then(doc => {
-    //     // console.log("this is the data: ", doc.id)
-    //     dispatch({
-    //       type: ACTIONS.UPDATE_FOLDER,
-    //       payload: { folder: { id: doc.id, ...doc.data() } },
-    //     })
-    //   })
-    //   .catch((e) => {
-    //     console.log(e)
-    //     dispatch({
-    //       type: ACTIONS.UPDATE_FOLDER,
-    //       payload: { folder: ROOT_FOLDER },
-    //     })
-    //   })
-  }
-
-  getFolder()
+    getFolder()
 
   }, [folderId])
 
-  // useEffect(() => {
-  //   return database.folders
-  //     .where("parentId", "==", folderId)
-  //     .where("userId", "==", currentUser.uid)
-  //     .orderBy("createdAt")
-  //     .onSnapshot(snapshot => {
-  //       dispatch({
-  //         type: ACTIONS.SET_CHILD_FOLDERS,
-  //         payload: { childFolders: snapshot.docs.map(database.formatDoc) },
-  //       })
-  //     })
-  // }, [folderId, currentUser])
-
-  useEffect( () => {
+  useEffect(() => {
 
     async function getFolders() {
-    // console.log("folderId: ", folderId, " currentUser: ", currentUser.uid)
-    const q = query(collection(database, "folders"), where("parentId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
-    // const querySnapshot = await getDocs(collection(database, "folders"), where("parentId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
-    const querySnapshot = await getDocs(q);
+      // console.log("folderId: ", folderId, " currentUser: ", currentUser.uid)
+      const q = query(collection(database, "folders"), where("parentId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
+      const querySnapshot = await getDocs(q);
 
-    let res = [];
-    querySnapshot.forEach((doc) => {
-      // doc.data() is never undefined for query doc snapshots
-      // console.log(doc.id, " => ", doc.data());
-      res.push({ id: doc.id, ...doc.data() })
-    });
+      let res = [];
+      querySnapshot.forEach((doc) => {
+        // doc.data() is never undefined for query doc snapshots
+        // console.log(doc.id, " => ", doc.data());
+        res.push({ id: doc.id, ...doc.data() })
+      });
 
-    // console.log("response: ", res)
+      dispatch({
+        type: ACTIONS.SET_CHILD_FOLDERS,
+        payload: { childFolders: res },
+      })
+    }
 
-    dispatch({
-      type: ACTIONS.SET_CHILD_FOLDERS,
-      payload: { childFolders: res },
-    })
-  }
-
-  getFolders()
+    getFolders()
 
   }, [folderId, currentUser])
 
-  // useEffect(() => {
-  //   return (
-  //     database.files
-  //       .where("folderId", "==", folderId)
-  //       .where("userId", "==", currentUser.uid)
-  //       // .orderBy("createdAt")
-  //       .onSnapshot(snapshot => {
-  //         dispatch({
-  //           type: ACTIONS.SET_CHILD_FILES,
-  //           payload: { childFiles: snapshot.docs.map(database.formatDoc) },
-  //         })
-  //       })
-  //   )
-  // }, [folderId, currentUser])
-
-  useEffect( () => {
+  useEffect(() => {
 
     async function getFiles() {
+      const q = query(collection(database, "files"), where("folderId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
+      const querySnapshot = await getDocs(q);
 
-    const querySnapshot = await getDocs(collection(database, "files"), where("folderId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
+      let res = [];
+      querySnapshot.forEach((doc) => {
+        // doc.data() is never undefined for query doc snapshots
+        // console.log(doc.id, " => ", doc.data());
+        res.push({ id: doc.id, ...doc.data() })
+      });
 
-    let res = [];
-    querySnapshot.forEach((doc) => {
-      // doc.data() is never undefined for query doc snapshots
-      // console.log(doc.id, " => ", doc.data());
-      res.push({ id: doc.id, ...doc.data() })
-    });
+      dispatch({
+        type: ACTIONS.SET_CHILD_FILES,
+        payload: { childFiles: res },
+      })
+    }
 
-    // console.log("response: ", res)
-
-    dispatch({
-      type: ACTIONS.SET_CHILD_FILES,
-      payload: { childFiles: res },
-    })
-  }
-
-  getFiles()
+    getFiles()
 
   }, [folderId, currentUser])
 

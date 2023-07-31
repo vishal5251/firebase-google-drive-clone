@@ -47,15 +47,29 @@ export default function SearchBar() {
             </Row>
             <Row>
                 <Col sm={12}>
-                    {searchResults?.map((result) => (
-                        <div className="d-flex align-items-center">
+                    <>
+                        <Row className="mt-2">
+                            <Col sm={3}>File</Col>
+                            <Col sm={6}>Name</Col>
+                            <Col sm={3}>Type</Col>
+                        </Row>
+                        {searchResults?.map((result) => (
 
                             <a href={result.url} target="_blank" className="p-2 ">
-                                {result.name}
-                                <Image className="m-10" height={100} src={result.url} />
+                                <Row className="d-flex align-items-center">
+                                    <Col sm={3}>
+                                        <Image className="m-10" height={100} src={result.url} />
+                                    </Col>
+                                    <Col sm={6}>
+                                        {result.name.split('.')[0]}
+                                    </Col>
+                                    <Col sm={3}>
+                                        {result.name.split('.')[1]}
+                                    </Col>
+                                </Row>
                             </a>
-                        </div>
-                    ))}
+                        ))}
+                    </>
                 </Col>
             </Row>
 
