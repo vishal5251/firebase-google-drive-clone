@@ -13,15 +13,13 @@ export default function Dashboard() {
   const { folderId } = useParams()
   let { state } = useLocation()
   state = state || {}
-
-  // console.log("this is the folder: ", state.folder)
+  
   const {
     folder,
     childFolders,
     childFiles
   } = useFolder(folderId, state.folder)
-  
-  // console.log("this is the childFolders: ", childFolders, folder, childFiles) 
+
   return (
     <>
       <Navbar />

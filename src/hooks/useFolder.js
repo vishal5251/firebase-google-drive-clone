@@ -1,7 +1,7 @@
 import { useReducer, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { database } from "../firebase"
-import { collection, getDoc, getDocs, orderBy, query, where } from "firebase/firestore"
+import { collection, doc, getDoc, getDocs, orderBy, query, where } from "firebase/firestore"
 
 const ACTIONS = {
   SELECT_FOLDER: "select-folder",
@@ -65,14 +65,9 @@ export function useFolder(folderId = null, folder = null) {
         })
       }
 
-      const querySnapshot = await getDocs(collection(database, "folders"), where("parentId", "==", folderId));
+      const querySnapshot = await getDoc(doc(collection(database, "folders"), folderId));
 
-      let res = null;
-      querySnapshot.forEach((doc) => {
-        // doc.data() is never undefined for query doc snapshots
-        // console.log(doc.id, " => ", doc.data());
-        res = { id: doc.id, ...doc.data() }
-      });
+      const res = { id: querySnapshot.id, ...querySnapshot.data() }
       if (res) {
         dispatch({
           type: ACTIONS.UPDATE_FOLDER,
@@ -94,14 +89,11 @@ export function useFolder(folderId = null, folder = null) {
   useEffect(() => {
 
     async function getFolders() {
-      // console.log("folderId: ", folderId, " currentUser: ", currentUser.uid)
       const q = query(collection(database, "folders"), where("parentId", "==", folderId), where("userId", "==", currentUser.uid), orderBy("createdAt"));
       const querySnapshot = await getDocs(q);
 
       let res = [];
       querySnapshot.forEach((doc) => {
-        // doc.data() is never undefined for query doc snapshots
-        // console.log(doc.id, " => ", doc.data());
         res.push({ id: doc.id, ...doc.data() })
       });
 
@@ -123,8 +115,6 @@ export function useFolder(folderId = null, folder = null) {
 
       let res = [];
       querySnapshot.forEach((doc) => {
-        // doc.data() is never undefined for query doc snapshots
-        // console.log(doc.id, " => ", doc.data());
         res.push({ id: doc.id, ...doc.data() })
       });
 
